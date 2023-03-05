@@ -29,7 +29,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   return (
-    <div className="py-4 flex items-center">
+    <div className="py-4 flex items-center" data-testid="product-card">
       <img src={product.img} alt={product.name} className="w-48 mr-4" />
       <div className="flex flex-grow">
         <div className="w-[50%]">

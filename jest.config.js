@@ -10,7 +10,11 @@ module.exports = {
 
   // The glob patterns Jest uses to detect test files.
   // https://jestjs.io/docs/configuration#testmatch-arraystring
-  testMatch: ["**/*.spec.ts?(x)"],
+  testMatch: [
+    "**/__tests__/**/*.ts?(x)",
+    "**/?(*.)+(test).ts?(x)",
+    "test.*.ts?(x)", // Include this pattern to detect test.* files
+  ],
 
   // Jest transformations
   // https://jestjs.io/docs/configuration#transform-objectstring-pathtotransformer--pathtotransformer-object
@@ -30,6 +34,7 @@ module.exports = {
     "!**/__mocks__/**",
     "!**/node_modules/**",
     "!**/*.d.ts",
+    "!**/main.{js,jsx,ts,tsx}", // exclude main.tsx from coverage
   ],
 
   // Important: order matters, specific rules should be defined first

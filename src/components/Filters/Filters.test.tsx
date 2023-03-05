@@ -34,10 +34,10 @@ const mockProducts: Product[] = [
   },
 ];
 
-describe("Filters", () => {
-  it("renders all color buttons", () => {
+describe("Filters Component", () => {
+  it("should render all color buttons", () => {
     render(<Filters products={mockProducts} setProducts={jest.fn()} />);
-    const allColorButtons = screen.getAllByRole("button");
+    const allColorButtons = screen.getAllByRole("option");
     expect(allColorButtons).toHaveLength(4);
     expect(allColorButtons[0]).toHaveTextContent("All");
     expect(allColorButtons[1]).toHaveTextContent("Black");
@@ -45,21 +45,27 @@ describe("Filters", () => {
     expect(allColorButtons[3]).toHaveTextContent("Red");
   });
 
-  it("filters products by color when color button is clicked", () => {
+  it("should filter products by color when color button is clicked", () => {
     const mockSetProducts = jest.fn();
     render(<Filters products={mockProducts} setProducts={mockSetProducts} />);
-    fireEvent.click(screen.getByText("Stone"));
+    fireEvent.change(screen.getByTestId("color-filter"), {
+      target: { value: "Stone" },
+    });
     expect(mockSetProducts).toHaveBeenCalledWith([
       mockProducts[1],
       mockProducts[3],
     ]);
   });
 
-  it("resets products to original list when 'All' button is clicked", () => {
+  it("should reset products to original list when 'All' button is clicked", () => {
     const mockSetProducts = jest.fn();
     render(<Filters products={mockProducts} setProducts={mockSetProducts} />);
-    fireEvent.click(screen.getByText("Stone"));
-    fireEvent.click(screen.getByText("All"));
+    fireEvent.change(screen.getByTestId("color-filter"), {
+      target: { value: "Stone" },
+    });
+    fireEvent.change(screen.getByTestId("color-filter"), {
+      target: { value: "All" },
+    });
     expect(mockSetProducts).toHaveBeenCalledWith(mockProducts);
   });
 });

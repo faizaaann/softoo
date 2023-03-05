@@ -28,6 +28,7 @@ const Filters: React.FC<FiltersProps> = ({ products, setProducts }) => {
       </label>
       <select
         id="color-filter"
+        data-testid="color-filter"
         className="bg-white border border-gray-400 rounded py-2 px-4 mb-4"
         onChange={e => handleFilterByColor(e.target.value)}
       >

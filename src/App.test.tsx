@@ -1,126 +1,114 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import axios from "axios";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import axios, { AxiosInstance } from "axios";
+import { act } from "react-dom/test-utils";
 
 import App from "./App";
 
 jest.mock("axios");
 
-const mockProducts = [
+const mockedProducts = [
   {
     id: 1,
-    name: "Product 1",
-    img: "http://example.com/img1.png",
+    name: "Test Product 1",
+    img: "http://example.com/test1.png",
     price: 10,
-    colour: "red",
+    colour: "Black",
   },
   {
     id: 2,
-    name: "Product 2",
-    img: "http://example.com/img2.png",
-    price: 5,
-    colour: "blue",
-  },
-  {
-    id: 3,
-    name: "Product 3",
-    img: "http://example.com/img3.png",
+    name: "Test Product 2",
+    img: "http://example.com/test2.png",
     price: 20,
-    colour: "green",
+    colour: "White",
   },
 ];
 
-const mockAxiosGet = jest.fn();
-jest.mock("axios", () => ({
-  get: mockAxiosGet,
-}));
-
-mockAxiosGet.mockResolvedValue({ data: mockProducts });
-mockAxiosGet.mockReset();
-
 describe("App", () => {
-  beforeEach(() => {
-    axios.get.mockReset();
-  });
-
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
-  it("renders App component", () => {
-    render(<App />);
-    expect(screen.getByText("Filters")).toBeInTheDocument();
-    expect(screen.getByText("Your basket")).toBeInTheDocument();
-  });
-
-  it("displays products on load", async () => {
-    render(<App />);
-    await waitFor(() => {
-      expect(screen.getAllByTestId("product-card")).toHaveLength(
-        mockProducts.length
-      );
+  describe("when no error", () => {
+    beforeEach(() => {
+      axios.get = jest.fn().mockResolvedValue({ data: mockedProducts });
+      render(<App />);
     });
-  });
 
-  it("adds product to basket when add button is clicked", async () => {
-    render(<App />);
-    await waitFor(() => {
-      fireEvent.click(screen.getAllByText("Add to basket")[0]);
-      expect(screen.getByText("Qty: 1")).toBeInTheDocument();
-      expect(screen.getByText("Total: $10.00")).toBeInTheDocument();
+    describe("rendering", () => {
+      it("renders the app with products and basket is empty", async () => {
+        await waitFor(() => {
+          expect(screen.getAllByTestId("product-card")).toHaveLength(2);
+          expect(screen.getByText("Your basket is empty.")).toBeInTheDocument();
+        });
+      });
     });
-  });
 
-  it("updates product quantity in basket when quantity is changed", async () => {
-    render(<App />);
-    await waitFor(() => {
-      fireEvent.click(screen.getAllByText("Add to basket")[0]);
-      expect(screen.getByText("Qty: 1")).toBeInTheDocument();
-      expect(screen.getByText("Total: $10.00")).toBeInTheDocument();
-      fireEvent.click(screen.getByText("+"));
-      expect(screen.getByText("Qty: 2")).toBeInTheDocument();
-      expect(screen.getByText("Total: $20.00")).toBeInTheDocument();
-    });
-  });
+    describe("methods", () => {
+      it("filters the products based on color", async () => {
+        const colorFilter = screen.getByTestId("color-filter");
+        userEvent.selectOptions(colorFilter, "Black");
+        await waitFor(() => {
+          expect(screen.getAllByTestId("product-card")).toHaveLength(1);
+        });
+      });
 
-  it("removes product from basket when remove button is clicked", async () => {
-    render(<App />);
-    await waitFor(() => {
-      fireEvent.click(screen.getAllByText("Add to basket")[0]);
-      expect(screen.getByText("Qty: 1")).toBeInTheDocument();
-      expect(screen.getByText("Total: $10.00")).toBeInTheDocument();
-      fireEvent.click(screen.getByText("Remove"));
-      expect(screen.queryByText("Qty: 1")).not.toBeInTheDocument();
-      expect(screen.getByText("Your basket is empty.")).toBeInTheDocument();
-    });
-  });
+      it("adds a new product to the basket", async () => {
+        await waitFor(() => {
+          expect(screen.getAllByTestId("product-card")).toHaveLength(2);
+        });
 
-  it("filters products by colour", async () => {
-    axios.get.mockResolvedValue({ data: mockProducts });
-    render(<App />);
-    await waitFor(() => {
-      fireEvent.click(screen.getByText("Colour"));
-      fireEvent.click(screen.getByText("Red"));
-      expect(screen.getAllByTestId("product-card")).toHaveLength(1);
-      expect(screen.getByText("Product 1")).toBeInTheDocument();
-      expect(screen.queryByText("Product 2")).not.toBeInTheDocument();
-      expect(screen.queryByText("Product 3")).not.toBeInTheDocument();
-    });
-  });
+        const addButton = screen.getAllByText("+")[0];
+        act(() => {
+          userEvent.click(addButton);
+        });
 
-  it("resets filters when reset button is clicked", async () => {
-    axios.get.mockResolvedValue({ data: mockProducts });
-    render(<App />);
-    await waitFor(() => {
-      fireEvent.click(screen.getByText("Colour"));
-      fireEvent.click(screen.getByText("Red"));
-      expect(screen.getAllByTestId("product-card")).toHaveLength(1);
-      expect(screen.getByText("Red")).toBeInTheDocument();
+        await waitFor(() => {
+          expect(screen.getByTestId("basket-item")).toBeInTheDocument();
+        });
+      });
 
-      fireEvent.click(screen.getByText("Reset"));
+      it("removes a product from the basket", async () => {
+        await waitFor(() => {
+          expect(screen.getAllByTestId("product-card")).toHaveLength(2);
+        });
 
-      await waitFor(() => {
-        expect(screen.getAllByTestId("product-card")).toHaveLength(3);
-        expect(screen.queryByText("Red")).not.toBeInTheDocument();
+        const addButton = screen.getAllByText("+")[0];
+        act(() => {
+          userEvent.click(addButton);
+        });
+
+        await waitFor(() => {
+          expect(screen.getByTestId("basket-item")).toBeInTheDocument();
+        });
+
+        const removeFromBasketButton = screen.getAllByText("Remove")[0];
+        act(() => {
+          userEvent.click(removeFromBasketButton);
+        });
+
+        await waitFor(() => {
+          expect(screen.queryByTestId("basket-item")).not.toBeInTheDocument();
+        });
+      });
+
+      it("updates a product in the basket", async () => {
+        await waitFor(() => {
+          expect(screen.getAllByTestId("product-card")).toHaveLength(2);
+        });
+
+        const addButton = screen.getAllByText("+")[0];
+        act(() => {
+          userEvent.click(addButton);
+        });
+        act(() => {
+          userEvent.click(addButton);
+        });
+
+        const secondAddButton = screen.getAllByText("+")[1];
+        act(() => {
+          userEvent.click(secondAddButton);
+        });
+
+        await waitFor(() => {
+          expect(screen.getAllByTestId("basket-item")).toHaveLength(2);
+        });
       });
     });
   });

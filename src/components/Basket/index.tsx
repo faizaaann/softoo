@@ -14,6 +14,7 @@ const Basket: React.FC<BasketProps> = ({ items, total }) => {
           <div
             key={item.id}
             className="flex justify-between items-center border-b border-gray-300 pb-2"
+            data-testid="basket-item"
           >
             <div className="flex items-center space-x-4">
               <img src={item.img} alt={item.name} className="w-16" />

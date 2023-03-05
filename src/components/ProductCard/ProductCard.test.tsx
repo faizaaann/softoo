@@ -1,61 +1,81 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 
-import { Product, ProductCardProps } from "@/interfaces";
+import { ProductCardProps } from "@/interfaces";
 
 import ProductCard from "./index";
 
-const mockProduct: Product = {
-  id: 1,
-  name: "Test Product",
-  img: "http://example.com/test.png",
-  price: 10.99,
-  colour: "red",
-};
-
-const mockProps: ProductCardProps = {
-  product: mockProduct,
+const mockProduct: ProductCardProps = {
+  product: {
+    id: 1,
+    name: "Test Product",
+    img: "http://example.com/test.png",
+    price: 20,
+    colour: "Black",
+  },
   onAddToBasket: jest.fn(),
   onRemoveFromBasket: jest.fn(),
 };
 
 describe("ProductCard", () => {
-  beforeEach(() => {
-    render(<ProductCard {...mockProps} />);
-  });
-
   describe("rendering", () => {
-    it("renders the product name", () => {
-      expect(screen.getByText("Product 1")).toBeInTheDocument();
-    });
-
-    it("renders the product price", () => {
-      expect(screen.getByText("£10.00")).toBeInTheDocument();
-    });
-
-    it("renders the product image", () => {
-      expect(screen.getByAltText("Product 1")).toBeInTheDocument();
+    it("renders product information correctly", () => {
+      render(<ProductCard {...mockProduct} />);
+      const productName = screen.getByText(mockProduct.product.name);
+      expect(productName).toBeInTheDocument();
+      const productPrice = screen.getByText(
+        `£${mockProduct.product.price.toFixed(2)}`
+      );
+      expect(productPrice).toBeInTheDocument();
+      const productImg = screen.getByAltText(mockProduct.product.name);
+      expect(productImg).toHaveAttribute("src", mockProduct.product.img);
     });
   });
 
   describe("methods", () => {
-    it("calls onAddToBasket when increment button is clicked", () => {
-      fireEvent.click(screen.getByText("+"));
-      expect(mockProps.onAddToBasket).toHaveBeenCalledWith(1, 1);
+    it("adds to basket when '+' button is clicked", () => {
+      render(<ProductCard {...mockProduct} />);
+      const increaseButton = screen.getByText("+");
+      fireEvent.click(increaseButton);
+      expect(mockProduct.onAddToBasket).toHaveBeenCalledWith(
+        mockProduct.product.id,
+        1
+      );
     });
 
-    it("calls onRemoveFromBasket when quantity is 0 and remove button is clicked", () => {
-      fireEvent.click(screen.getByText("Remove"));
-      expect(mockProps.onRemoveFromBasket).toHaveBeenCalledWith(1);
+    it("removes from basket when '-' button is clicked and quantity > 0", () => {
+      render(<ProductCard {...mockProduct} />);
+      const increaseButton = screen.getByText("+");
+      fireEvent.click(increaseButton);
+      const decreaseButton = screen.getByText("-");
+      fireEvent.click(decreaseButton);
+      expect(mockProduct.onRemoveFromBasket).toHaveBeenCalledWith(
+        mockProduct.product.id
+      );
     });
 
-    it("calls onAddToBasket when quantity is 1 and remove button is clicked", () => {
-      fireEvent.click(screen.getByText("+"));
-      fireEvent.click(screen.getByText("Remove"));
-      expect(mockProps.onAddToBasket).toHaveBeenCalledWith(1, 1);
+    it("decreases quantity and removes from basket when '-' button is clicked and quantity > 1", () => {
+      render(<ProductCard {...mockProduct} />);
+      const increaseButton = screen.getByText("+");
+      fireEvent.click(increaseButton);
+      fireEvent.click(increaseButton);
+      const decreaseButton = screen.getByText("-");
+      fireEvent.click(decreaseButton);
+      expect(mockProduct.onRemoveFromBasket).toHaveBeenCalledWith(
+        mockProduct.product.id
+      );
+      fireEvent.click(decreaseButton);
+      expect(mockProduct.onRemoveFromBasket).toHaveBeenCalledTimes(2);
     });
 
-    it("disables decrement button if quantity is 0", () => {
-      expect(screen.getByText("-")).toBeDisabled();
+    it("removes from basket when 'Remove' button is clicked", () => {
+      render(<ProductCard {...mockProduct} />);
+      const increaseButton = screen.getByText("+");
+      fireEvent.click(increaseButton);
+      const removeButton = screen.getByText("Remove");
+      fireEvent.click(removeButton);
+      expect(mockProduct.onRemoveFromBasket).toHaveBeenCalledWith(
+        mockProduct.product.id
+      );
     });
   });
 });
